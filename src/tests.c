@@ -7172,6 +7172,10 @@ void run_ecdsa_edge_cases(void) {
 # include "modules/schnorrsig/tests_impl.h"
 #endif
 
+#ifdef ENABLE_MODULE_SCHNORR_ADAPTOR
+# include "modules/schnorr_adaptor/tests_impl.h"
+#endif
+
 #ifdef ENABLE_MODULE_ECDSA_S2C
 # include "modules/ecdsa_s2c/tests_impl.h"
 #endif
@@ -7505,6 +7509,10 @@ int main(int argc, char **argv) {
 
 #ifdef ENABLE_MODULE_SCHNORRSIG
     run_schnorrsig_tests();
+#endif
+
+#ifdef ENABLE_MODULE_SCHNORR_ADAPTOR
+    run_schnorr_adaptor_tests();
 #endif
 
 #ifdef ENABLE_MODULE_ECDSA_S2C
