@@ -88,7 +88,7 @@ static int nonce_function_bip340(unsigned char *nonce32, const unsigned char *ms
         secp256k1_sha256_initialize_tagged(&sha, algo, algolen);
     }
 
-    /* Hash masked-key||pk||msg using the tagged hash as per the spec */
+    /* Hash masked-key||t||pk||msg using the tagged hash as per the spec */
     secp256k1_sha256_write(&sha, masked_key, 32);
     secp256k1_sha256_write(&sha, xonly_t32, 32);
     secp256k1_sha256_write(&sha, xonly_pk32, 32);
