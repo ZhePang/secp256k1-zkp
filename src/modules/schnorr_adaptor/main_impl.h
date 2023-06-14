@@ -174,12 +174,11 @@ static int secp256k1_schnorr_adaptor_presign(const secp256k1_context *ctx, unsig
     secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj, &k); // R = k0*G
     secp256k1_ge_set_gej(&r, &rj);
 
-    secp256k1_eckey_pubkey_parse(&t, t33, 33); // T = cpoint(T)
+    ret &= secp256k1_eckey_pubkey_parse(&t, t33, 33); // T = cpoint(T)
 
     /* We declassify r to allow using it as a branch point. This is fine
-     * because r is not a secret. 
-     * should we declassify r or r'? */
-    secp256k1_gej_add_ge(&r0j, &rj, &t) // R' = R + T
+     * because r is not a secret.  */
+    secp256k1_gej_add_ge_var(&r0j, &rj, &t) // R' = R + T, can use gej_add_ge_var since r and t aren't secret
     secp256k1_ge_set_gej(&r0, &r0j);
     secp256k1_declassify(ctx, &r, sizeof(r));
     secp256k1_fe_normalize_var(&r.y);
