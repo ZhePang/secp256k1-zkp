@@ -130,7 +130,7 @@ static void secp256k1_schnorrsig_challenge(secp256k1_scalar* e, const unsigned c
     secp256k1_scalar_set_b32(e, buf, NULL);
 }
 
-static int secp256k1_schnorr_adaptor_presign(const secp256k1_context *ctx, unsigned char *sig65, const unsigned char *msg32, const secp256k1_keypair *keypair, secp256k1_nonce_function_hardened noncefp, unsigned char *t33, void *ndata) {
+static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *ctx, unsigned char *sig65, const unsigned char *msg32, const secp256k1_keypair *keypair, secp256k1_nonce_function_hardened noncefp, const unsigned char *t33, void *ndata) {
     secp256k1_scalar sk;
     secp256k1_scalar e;
     secp256k1_scalar k;
@@ -198,7 +198,11 @@ static int secp256k1_schnorr_adaptor_presign(const secp256k1_context *ctx, unsig
     memset(seckey, 0, sizeof(seckey));
 
     return ret;
+}
 
+int secp256k1_schnorr_adaptor_presign(const secp256k1_context* ctx, unsigned char *sig65, const unsigned char *msg32, const secp256k1_keypair *keypair, const unsigned char *t33, const unsigned char *aux_rand32) {
+    /* We cast away const from the passed aux_rand32 argument since we know the default nonce function does not modify it. */
+    return secp256k1_schnorrsig_sign_internal(ctx, sig65, msg32, keypair, secp256k1_nonce_function_bip340, t33, (unsigned char*)aux_rand32);
 }
 
 #endif
