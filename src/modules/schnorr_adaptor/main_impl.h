@@ -177,7 +177,7 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
     secp256k1_ge_set_gej(&r, &rj);
 
     /* T = cpoint(T) */
-    ret &= secp256k1_eckey_pubkey_parse(&t, t33, 33);
+    ret &= !secp256k1_eckey_pubkey_parse(&t, t33, 33);
 
     /* We declassify r to allow using it as a branch point. This is fine
      * because r is not a secret.  */

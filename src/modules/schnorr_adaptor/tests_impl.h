@@ -111,9 +111,83 @@ void run_nonce_function_bip340_tests(void) {
     CHECK(secp256k1_memcmp_var(nonce_z, nonce, 32) == 0);
 }
 
+void test_schnorr_adaptor_api(void) {
+    unsigned char sk1[32];
+    unsigned char sk2[32];
+    unsigned char sk3[32];
+    unsigned char msg[32];
+    unsigned char t[33];
+    secp256k1_keypair keypairs[3];
+    secp256k1_keypair invalid_keypair = {{ 0 }};
+    secp256k1_xonly_pubkey pk[3];
+    secp256k1_xonly_pubkey zero_pk;
+    unsigned char sig[65];
+
+    /** setup **/
+    secp256k1_context *none = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    secp256k1_context *sign = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+    secp256k1_context *vrfy = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+    secp256k1_context *both = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+    secp256k1_context *sttc = secp256k1_context_clone(secp256k1_context_no_precomp);
+    int ecount;
+
+    secp256k1_context_set_error_callback(none, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_error_callback(sign, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_error_callback(vrfy, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_error_callback(both, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_error_callback(sttc, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_illegal_callback(none, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_illegal_callback(sign, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_illegal_callback(vrfy, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_illegal_callback(both, counting_illegal_callback_fn, &ecount);
+    secp256k1_context_set_illegal_callback(sttc, counting_illegal_callback_fn, &ecount);
+
+    secp256k1_testrand256(sk1);
+    secp256k1_testrand256(sk2);
+    secp256k1_testrand256(sk3);
+    secp256k1_testrand256(msg);
+    secp256k1_testrand_bytes_test(t, 33);
+    CHECK(secp256k1_keypair_create(ctx, &keypairs[0], sk1) == 1);
+    CHECK(secp256k1_keypair_create(ctx, &keypairs[1], sk2) == 1);
+    CHECK(secp256k1_keypair_create(ctx, &keypairs[2], sk3) == 1);
+    CHECK(secp256k1_keypair_xonly_pub(ctx, &pk[0], NULL, &keypairs[0]) == 1);
+    CHECK(secp256k1_keypair_xonly_pub(ctx, &pk[1], NULL, &keypairs[1]) == 1);
+    CHECK(secp256k1_keypair_xonly_pub(ctx, &pk[2], NULL, &keypairs[2]) == 1);
+    memset(&zero_pk, 0, sizeof(zero_pk));
+
+    /** main test body **/
+    ecount = 0;
+    CHECK(secp256k1_schnorr_adaptor_presign(none, sig, msg, &keypairs[0], t, NULL) == 1);
+    CHECK(ecount == 0);
+    CHECK(secp256k1_schnorr_adaptor_presign(vrfy, sig, msg, &keypairs[0], t, NULL) == 1);
+    CHECK(ecount == 0);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, sig, msg, &keypairs[0], t, NULL) == 1);
+    CHECK(ecount == 0);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, NULL, msg, &keypairs[0], t, NULL) == 0);
+    CHECK(ecount == 1);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, sig, NULL, &keypairs[0], t, NULL) == 0);
+    CHECK(ecount == 2);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, sig, msg, NULL, t, NULL) == 0);
+    CHECK(ecount == 3);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, sig, msg, &keypairs[0], NULL, NULL) == 0);
+    CHECK(ecount == 4);
+    CHECK(secp256k1_schnorr_adaptor_presign(sign, sig, msg, &invalid_keypair, t, NULL) == 0);
+    CHECK(ecount == 5);
+    CHECK(secp256k1_schnorr_adaptor_presign(sttc, sig, msg, &keypairs[0], t, NULL) == 0);
+    CHECK(ecount == 6);
+
+    secp256k1_context_destroy(none);
+    secp256k1_context_destroy(sign);
+    secp256k1_context_destroy(vrfy);
+    secp256k1_context_destroy(both);
+    secp256k1_context_destroy(sttc);
+}
+
 void run_schnorr_adaptor_tests(void) {
     int i;
     run_nonce_function_bip340_tests();
+
+    test_schnorr_adaptor_api();
 }
 
 #endif
