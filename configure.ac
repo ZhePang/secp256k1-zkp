@@ -442,6 +442,7 @@ fi
 
 if test x"$enable_module_schnorr_adaptor" = x"yes"; then
   AC_DEFINE(ENABLE_MODULE_SCHNORR_ADAPTOR, 1, [Define thsi symbol to enable the Schnorr adaptor module])
+  enable_module_extrakeys=yes
 fi
 
 if test x"$enable_module_extrakeys" = x"yes"; then

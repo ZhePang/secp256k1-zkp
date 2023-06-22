@@ -7,8 +7,8 @@
 #ifndef _SECP256K1_MODULE_SCHNORR_ADAPTOR_MAIN_H
 #define _SECP256K1_MODULE_SCHNORR_ADAPTOR_MAIN_H
 
-#include "../../include/secp256k1.h"
-#include "../../include/secp256k1_schnorr_adaptor.h"
+#include "../../../include/secp256k1.h"
+#include "../../../include/secp256k1_schnorr_adaptor.h"
 #include "../../hash.h"
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
@@ -46,8 +46,6 @@ static void secp256k1_nonce_function_bip340_sha256_tagged_aux(secp256k1_sha256 *
 /* algo argument for nonce_function_bip340 to derive the nonce exactly as stated in BIP-340
  * by using the correct tagged hash function. */
 static const unsigned char bip340_algo[13] = "BIP0340/nonce";
-
-// static const unsigned char schnorrsig_extraparams_magic[4] = SECP256K1_SCHNORRSIG_EXTRAPARAMS_MAGIC;
 
 static int nonce_function_bip340(unsigned char *nonce32, const unsigned char *msg32, const unsigned char *key32, const unsigned char *xonly_t32, const unsigned char *xonly_pk32, const unsigned char *algo, size_t algolen, void *data) {
     secp256k1_sha256 sha;
@@ -141,7 +139,6 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
     secp256k1_ge r0;
     secp256k1_ge t;
     unsigned char nonce32[32] = {0};
-    unsigned char buf33[33];
     unsigned char pk_buf[32];
     unsigned char seckey[32];
     size_t size = 33;
@@ -152,6 +149,7 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
     ARG_CHECK(sig65 != NULL);
     ARG_CHECK(msg32 != NULL);
     ARG_CHECK(keypair != NULL);
+    ARG_CHECK(t33 != NULL);
 
     if (noncefp == NULL) {
         noncefp = secp256k1_nonce_function_bip340;
@@ -163,22 +161,28 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
         secp256k1_scalar_negate(&sk, &sk);
     }
 
-    secp256k1_scalar_get_b32(seckey, &sk); // d
-    secp256k1_fe_get_b32(pk_buf, &pk.x); // bytes_from_point(P)
+    /* d */
+    secp256k1_scalar_get_b32(seckey, &sk);
+    /* bytes_from_point(P) */ 
+    secp256k1_fe_get_b32(pk_buf, &pk.x); 
 
-    ret &= !!noncefp(nonce32, msg32, seckey, t33[1], pk_buf, bip340_algo, sizeof(bip340_algo), ndata);
-    secp256k1_scalar_set_b32(&k, nonce32, NULL); // k0
+    ret &= !!noncefp(nonce32, msg32, seckey, &t33[1], pk_buf, bip340_algo, sizeof(bip340_algo), ndata);
+    /* k0 */ 
+    secp256k1_scalar_set_b32(&k, nonce32, NULL); 
     ret &= !secp256k1_scalar_is_zero(&k);
     secp256k1_scalar_cmov(&k, &secp256k1_scalar_one, !ret);
 
-    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj, &k); // R = k0*G
+    /* R = k0*G */ 
+    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj, &k); 
     secp256k1_ge_set_gej(&r, &rj);
 
-    ret &= secp256k1_eckey_pubkey_parse(&t, t33, 33); // T = cpoint(T)
+    /* T = cpoint(T) */
+    ret &= secp256k1_eckey_pubkey_parse(&t, t33, 33);
 
     /* We declassify r to allow using it as a branch point. This is fine
      * because r is not a secret.  */
-    secp256k1_gej_add_ge_var(&r0j, &rj, &t) // R' = R + T, can use gej_add_ge_var since r and t aren't secret
+    /* R' = R + T, can use gej_add_ge_var since r and t aren't secret */
+    secp256k1_gej_add_ge_var(&r0j, &rj, &t, NULL); 
     secp256k1_ge_set_gej(&r0, &r0j);
     secp256k1_declassify(ctx, &r, sizeof(r));
     secp256k1_fe_normalize_var(&r.y);
@@ -189,7 +193,8 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
 
     secp256k1_schnorrsig_challenge(&e, &sig65[1], msg32, pk_buf);
     secp256k1_scalar_mul(&e, &e, &sk);
-    secp256k1_scalar_add(&e, &e, &k); // k + e * d
+    /* k + e * d */
+    secp256k1_scalar_add(&e, &e, &k); 
     secp256k1_scalar_get_b32(&sig65[33], &e);
 
     secp256k1_memczero(sig65, 65, !ret);
@@ -202,7 +207,7 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
 
 int secp256k1_schnorr_adaptor_presign(const secp256k1_context* ctx, unsigned char *sig65, const unsigned char *msg32, const secp256k1_keypair *keypair, const unsigned char *t33, const unsigned char *aux_rand32) {
     /* We cast away const from the passed aux_rand32 argument since we know the default nonce function does not modify it. */
-    return secp256k1_schnorrsig_sign_internal(ctx, sig65, msg32, keypair, secp256k1_nonce_function_bip340, t33, (unsigned char*)aux_rand32);
+    return secp256k1_schnorr_adaptor_presign_internal(ctx, sig65, msg32, keypair, secp256k1_nonce_function_bip340, t33, (unsigned char*)aux_rand32);
 }
 
 #endif
