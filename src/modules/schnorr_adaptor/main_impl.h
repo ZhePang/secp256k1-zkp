@@ -133,6 +133,7 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
     secp256k1_scalar e;
     secp256k1_scalar k;
     secp256k1_gej rj;
+    secp256k1_gej rj1;
     secp256k1_gej r0j;
     secp256k1_ge pk;
     secp256k1_ge r;
@@ -181,14 +182,17 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
 
     /* We declassify r to allow using it as a branch point. This is fine
      * because r is not a secret.  */
-    /* R' = R + T, can use gej_add_ge_var since r and t aren't secret */
-    secp256k1_gej_add_ge_var(&r0j, &rj, &t, NULL); 
-    secp256k1_ge_set_gej(&r0, &r0j);
     secp256k1_declassify(ctx, &r, sizeof(r));
     secp256k1_fe_normalize_var(&r.y);
     if (secp256k1_fe_is_odd(&r.y)) {
         secp256k1_scalar_negate(&k, &k);
     }
+
+    /* R' = k*G + T, can use gej_add_ge_var since r and t aren't secret */
+    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj1, &k);
+    secp256k1_gej_add_ge_var(&r0j, &rj1, &t, NULL); 
+    secp256k1_ge_set_gej(&r0, &r0j);
+
     secp256k1_eckey_pubkey_serialize(&r0, sig65, &size, 1);
 
     secp256k1_schnorrsig_challenge(&e, &sig65[1], msg32, pk_buf);
