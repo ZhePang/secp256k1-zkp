@@ -203,6 +203,7 @@ void test_schnorrsig_sha256_tagged(void) {
  * Signs the message and checks that it's the same as expected_sig. */
 void test_schnorr_adaptor_vectors_check_presigning(const unsigned char *sk, const unsigned char *pk_serialized, const unsigned char *aux_rand, const unsigned char *msg32, const unsigned char *t33, const unsigned char *expected_sig) {
     unsigned char sig[65];
+    unsigned char t[33];
     secp256k1_keypair keypair;
     secp256k1_xonly_pubkey pk, pk_expected;
 
@@ -213,7 +214,8 @@ void test_schnorr_adaptor_vectors_check_presigning(const unsigned char *sk, cons
     CHECK(secp256k1_xonly_pubkey_parse(ctx, &pk_expected, pk_serialized));
     CHECK(secp256k1_keypair_xonly_pub(ctx, &pk, NULL, &keypair));
     CHECK(secp256k1_memcmp_var(&pk, &pk_expected, sizeof(pk)) == 0);
-    /*later for checking verify*/
+    CHECK(secp256k1_schnorr_adaptor_extract_t(ctx, t, sig, msg32, &pk));
+    CHECK(secp256k1_memcmp_var(t, t33, 33) == 0);
 }
 
 void test_schnorr_adaptor_vectors(void) {

@@ -214,4 +214,62 @@ int secp256k1_schnorr_adaptor_presign(const secp256k1_context* ctx, unsigned cha
     return secp256k1_schnorr_adaptor_presign_internal(ctx, sig65, msg32, keypair, secp256k1_nonce_function_bip340, t33, (unsigned char*)aux_rand32);
 }
 
+static int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned char *t33, const unsigned char *sig65, const unsigned char *msg32, const secp256k1_xonly_pubkey *pubkey) {
+    secp256k1_scalar s0;
+    secp256k1_scalar e;
+    secp256k1_gej rj;
+    secp256k1_ge r;
+    secp256k1_ge pk;
+    secp256k1_gej pkj;
+    secp256k1_ge r0;
+    secp256k1_ge t;
+    secp256k1_gej tj;
+    unsigned char buf[32];
+    size_t size = 33;
+    int overflow;
+    int ret = 1;
+
+    VERIFY_CHECK(ctx != NULL);
+    ARG_CHECK(t33 != NULL);
+    ARG_CHECK(sig65 != NULL);
+    ARG_CHECK(msg32 != NULL);
+    ARG_CHECK(pubkey != NULL);
+
+    /* P */
+    ret &= !!secp256k1_xonly_pubkey_load(ctx, &pk, pubkey);
+
+    /* s0 */
+    secp256k1_scalar_set_b32(&s0, &sig65[33], &overflow);
+    ret &= !overflow;
+
+    /* R0 */
+    ret &= !!secp256k1_eckey_pubkey_parse(&r0, &sig65[0], 33);
+
+    /* Compute e */
+    secp256k1_fe_get_b32(buf, &pk.x);
+    secp256k1_schnorrsig_challenge(&e, &sig65[1], msg32, buf);
+
+    /* Compute rj = s0*G + (-e) * pkj */
+    secp256k1_scalar_negate(&e, &e);
+    secp256k1_gej_set_ge(&pkj, &pk);
+    secp256k1_ecmult(&rj, &pkj, &e, &s0);
+
+    /* R */
+    secp256k1_ge_set_gej_var(&r, &rj);
+    ret &= !secp256k1_ge_is_infinity(&r);
+    secp256k1_fe_normalize_var(&r.y);
+    ret &= !secp256k1_fe_is_odd(&r.y);
+
+    /* T = R0 + (- R) */
+    secp256k1_gej_neg(&rj, &rj);
+    secp256k1_gej_add_ge_var(&tj, &rj, &r0, NULL);
+    secp256k1_ge_set_gej(&t, &tj);
+    secp256k1_eckey_pubkey_serialize(&t, t33, &size, 1);
+
+    secp256k1_memczero(t33, 33, !ret);
+    secp256k1_scalar_clear(&s0);
+
+    return ret;
+}
+
 #endif
