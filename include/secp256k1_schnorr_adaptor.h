@@ -86,6 +86,23 @@ SECP256K1_API int secp256k1_schnorr_adaptor_presign(
     const unsigned char *aux_rand32
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
 
+/** Extract an adaptor point T from the signature.
+ *
+ *  Returns 1 on success, 0 on failure.
+ *  Args:    ctx: pointer to a context object, initialized for verification.
+ *  Out:      t33: pointer to a 33-byte array to store the compressed adaptor point.
+ *  In:     sig65: pointer to a 65-byte serialized signature.
+ *           msg32: the 32-byte message being signed.
+ *           pubkey: pointer to an x-only public key to verify with (cannot be NULL)
+ */
+SECP256K1_API int secp256k1_schnorr_adaptor_extract_t(
+    const secp256k1_context* ctx,
+    unsigned char *t33,
+    const unsigned char *sig65,
+    const unsigned char *msg32,
+    const secp256k1_xonly_pubkey *pubkey
+) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
+
 #ifdef __cplusplus
 }
 #endif

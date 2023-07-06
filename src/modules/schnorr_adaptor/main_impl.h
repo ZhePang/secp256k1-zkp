@@ -214,7 +214,7 @@ int secp256k1_schnorr_adaptor_presign(const secp256k1_context* ctx, unsigned cha
     return secp256k1_schnorr_adaptor_presign_internal(ctx, sig65, msg32, keypair, secp256k1_nonce_function_bip340, t33, (unsigned char*)aux_rand32);
 }
 
-static int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned char *t33, const unsigned char *sig65, const unsigned char *msg32, const secp256k1_xonly_pubkey *pubkey) {
+int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned char *t33, const unsigned char *sig65, const unsigned char *msg32, const secp256k1_xonly_pubkey *pubkey) {
     secp256k1_scalar s0;
     secp256k1_scalar e;
     secp256k1_gej rj;
