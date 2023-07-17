@@ -165,16 +165,16 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
     /* d */
     secp256k1_scalar_get_b32(seckey, &sk);
     /* bytes_from_point(P) */ 
-    secp256k1_fe_get_b32(pk_buf, &pk.x); 
+    secp256k1_fe_get_b32(pk_buf, &pk.x);
 
     ret &= !!noncefp(nonce32, msg32, seckey, &t33[1], pk_buf, bip340_algo, sizeof(bip340_algo), ndata);
-    /* k0 */ 
-    secp256k1_scalar_set_b32(&k, nonce32, NULL); 
+    /* k0 */
+    secp256k1_scalar_set_b32(&k, nonce32, NULL);
     ret &= !secp256k1_scalar_is_zero(&k);
     secp256k1_scalar_cmov(&k, &secp256k1_scalar_one, !ret);
 
-    /* R = k0*G */ 
-    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj, &k); 
+    /* R = k0*G */
+    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj, &k);
     secp256k1_ge_set_gej(&r, &rj);
 
     /* T = cpoint(T) */
@@ -190,15 +190,15 @@ static int secp256k1_schnorr_adaptor_presign_internal(const secp256k1_context *c
 
     /* R' = k*G + T, can use gej_add_ge_var since r and t aren't secret */
     secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &rj1, &k);
-    secp256k1_gej_add_ge_var(&r0j, &rj1, &t, NULL); 
+    secp256k1_gej_add_ge_var(&r0j, &rj1, &t, NULL);
     secp256k1_ge_set_gej(&r0, &r0j);
 
-    secp256k1_eckey_pubkey_serialize(&r0, sig65, &size, 1);
+    ret &= !!secp256k1_eckey_pubkey_serialize(&r0, sig65, &size, 1);
 
     secp256k1_schnorrsig_challenge(&e, &sig65[1], msg32, pk_buf);
     secp256k1_scalar_mul(&e, &e, &sk);
     /* k + e * d */
-    secp256k1_scalar_add(&e, &e, &k); 
+    secp256k1_scalar_add(&e, &e, &k);
     secp256k1_scalar_get_b32(&sig65[33], &e);
 
     secp256k1_memczero(sig65, 65, !ret);
@@ -264,7 +264,7 @@ int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned c
     secp256k1_gej_neg(&rj, &rj);
     secp256k1_gej_add_ge_var(&tj, &rj, &r0, NULL);
     secp256k1_ge_set_gej(&t, &tj);
-    secp256k1_eckey_pubkey_serialize(&t, t33, &size, 1);
+    ret &= !!secp256k1_eckey_pubkey_serialize(&t, t33, &size, 1);
 
     secp256k1_memczero(t33, 33, !ret);
     secp256k1_scalar_clear(&s0);
