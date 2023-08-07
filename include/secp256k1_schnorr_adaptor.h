@@ -89,7 +89,7 @@ SECP256K1_API int secp256k1_schnorr_adaptor_presign(
 /** Extract an adaptor point T from the signature.
  *
  *  Returns 1 on success, 0 on failure.
- *  Args:    ctx: pointer to a context object, initialized for verification.
+ *  Args:    ctx: pointer to a context object, initialized for extracting adaptor point.
  *  Out:      t33: pointer to a 33-byte array to store the compressed adaptor point.
  *  In:     sig65: pointer to a 65-byte serialized signature.
  *           msg32: the 32-byte message being signed.
@@ -102,6 +102,37 @@ SECP256K1_API int secp256k1_schnorr_adaptor_extract_t(
     const unsigned char *msg32,
     const secp256k1_xonly_pubkey *pubkey
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
+
+/** Adapt an adaptor signature to a schnorr signature.
+ *
+ *  Returns 1 on success, 0 on failure.
+ *  Args:    ctx: pointer to a context object, initialized for adaptation.
+ *  Out:   sig64: pointer to a 64-byte array to store the adapted schnorr signature.
+ *  In:    sig65: pointer to a 65-byte serialized adaptor signature.
+ *           t32: pointer to a 32-byte adaptor.
+ *           
+ */
+SECP256K1_API int secp256k1_schnorr_adaptor_adapt(
+    const secp256k1_context* ctx,
+    unsigned char *sig64, 
+    const unsigned char *sig65,
+    const unsigned char *t32
+) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
+
+/** Extract the adaptor from an adaptor signature and a schnorr signature.
+ *
+ *  Returns 1 on success, 0 on failure.
+ *  Args:    ctx: pointer to a context object, initialized for extracting adaptor.
+ *  Out:      t32: pointer to a 32-byte array to store the adaptor.
+ *  In:    sig65: pointer to a 65-byte serialized adaptor signature.
+ *           sig64: pointer to a 64-byte adapted schnorr signature.
+ */
+SECP256K1_API int secp256k1_schnorr_adaptor_extract_adaptor(
+    const secp256k1_context* ctx,
+    unsigned char *t32,
+    const unsigned char *sig65,
+    const unsigned char *sig64
+) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
 
 #ifdef __cplusplus
 }

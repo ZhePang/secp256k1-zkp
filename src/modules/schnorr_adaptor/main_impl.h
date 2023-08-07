@@ -277,4 +277,76 @@ int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned c
     return ret;
 }
 
+int secp256k1_schnorr_adaptor_adapt(const secp256k1_context* ctx, unsigned char *sig64, const unsigned char *sig65, const unsigned char *t32) {
+    secp256k1_scalar s0;
+    secp256k1_scalar s;
+    secp256k1_scalar t;
+    int overflow;
+    int ret = 1;
+
+    VERIFY_CHECK(ctx != NULL);
+    ARG_CHECK(sig64 != NULL);
+    ARG_CHECK(sig65 != NULL);
+    ARG_CHECK(t32 != NULL);
+
+    /* s0 */
+    secp256k1_scalar_set_b32(&s0, &sig65[33], &overflow);
+    ret &= !overflow;
+
+    /* t */
+    secp256k1_scalar_set_b32(&t, t32, &overflow);
+    ret &= !overflow;
+
+    if (sig65[0] == SECP256K1_TAG_PUBKEY_EVEN) {
+        secp256k1_scalar_add(&s, &s0, &t);
+    } else if (sig65[0] == SECP256K1_TAG_PUBKEY_ODD) {
+        secp256k1_scalar_negate(&t, &t);
+        secp256k1_scalar_add(&s, &s0, &t);
+    } else {
+        ret &= 0;
+    }
+
+    memset(sig64, 0, 64);
+    memcpy(sig64, &sig65[1], 32);
+    secp256k1_scalar_get_b32(&sig64[32], &s);
+
+    return ret;
+}
+
+int secp256k1_schnorr_adaptor_extract_adaptor(const secp256k1_context* ctx, unsigned char *t32, const unsigned char *sig65, const unsigned char *sig64) {
+    secp256k1_scalar s0;
+    secp256k1_scalar s;
+    secp256k1_scalar t;
+    int overflow;
+    int ret = 1;
+
+    VERIFY_CHECK(ctx != NULL);
+    ARG_CHECK(secp256k1_ecmult_gen_context_is_built(&ctx->ecmult_gen_ctx));
+    ARG_CHECK(t32 != NULL);
+    ARG_CHECK(sig65 != NULL);
+    ARG_CHECK(sig64 != NULL);
+
+    /* s0 */
+    secp256k1_scalar_set_b32(&s0, &sig65[33], &overflow);
+    ret &= !overflow;
+
+    /* s */
+    secp256k1_scalar_set_b32(&s, &sig64[32], &overflow);
+    ret &= !overflow;
+
+    if (sig65[0] == SECP256K1_TAG_PUBKEY_EVEN) {
+        secp256k1_scalar_negate(&s0, &s0);
+        secp256k1_scalar_add(&t, &s, &s0);
+    } else if (sig65[0] == SECP256K1_TAG_PUBKEY_ODD) {
+        secp256k1_scalar_negate(&s, &s);
+        secp256k1_scalar_add(&t, &s0, &s);
+    } else {
+        ret &= 0;
+    }
+
+    secp256k1_scalar_get_b32(t32, &t);
+
+    return ret;
+}
+
 #endif
