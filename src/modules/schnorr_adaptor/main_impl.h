@@ -321,7 +321,6 @@ int secp256k1_schnorr_adaptor_extract_adaptor(const secp256k1_context* ctx, unsi
     int ret = 1;
 
     VERIFY_CHECK(ctx != NULL);
-    ARG_CHECK(secp256k1_ecmult_gen_context_is_built(&ctx->ecmult_gen_ctx));
     ARG_CHECK(t32 != NULL);
     ARG_CHECK(sig65 != NULL);
     ARG_CHECK(sig64 != NULL);
