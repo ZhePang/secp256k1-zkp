@@ -266,7 +266,7 @@ int secp256k1_schnorr_adaptor_extract_t(const secp256k1_context* ctx, unsigned c
     } else if (sig65[0] == SECP256K1_TAG_PUBKEY_ODD) {
         secp256k1_gej_neg(&tj, &tj);
     } else {
-        ret &= 0;
+        ret = 0;
     }
     secp256k1_ge_set_gej(&t, &tj);
     ret &= !!secp256k1_eckey_pubkey_serialize(&t, t33, &size, 1);
@@ -303,7 +303,7 @@ int secp256k1_schnorr_adaptor_adapt(const secp256k1_context* ctx, unsigned char 
         secp256k1_scalar_negate(&t, &t);
         secp256k1_scalar_add(&s, &s0, &t);
     } else {
-        ret &= 0;
+        ret = 0;
     }
 
     memset(sig64, 0, 64);
@@ -340,7 +340,7 @@ int secp256k1_schnorr_adaptor_extract_adaptor(const secp256k1_context* ctx, unsi
         secp256k1_scalar_negate(&s, &s);
         secp256k1_scalar_add(&t, &s0, &s);
     } else {
-        ret &= 0;
+        ret = 0;
     }
 
     secp256k1_scalar_get_b32(t32, &t);
