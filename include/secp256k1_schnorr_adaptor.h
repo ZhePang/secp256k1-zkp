@@ -114,7 +114,7 @@ SECP256K1_API int secp256k1_schnorr_adaptor_extract_t(
  */
 SECP256K1_API int secp256k1_schnorr_adaptor_adapt(
     const secp256k1_context* ctx,
-    unsigned char *sig64, 
+    unsigned char *sig64,
     const unsigned char *sig65,
     const unsigned char *t32
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
