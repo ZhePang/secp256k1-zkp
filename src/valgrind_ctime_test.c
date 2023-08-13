@@ -184,6 +184,23 @@ void run_tests(secp256k1_context *ctx, unsigned char *key) {
     CHECK(ret == 1);
 #endif
 
+#ifdef ENABLE_MODULE_SCHNORR_ADAPTOR
+    {
+        unsigned char t[33];
+        for (i = 0; i < 33; i++) {
+            t[i] = i;
+        }
+
+        VALGRIND_MAKE_MEM_UNDEFINED(key, 32);
+        ret = secp256k1_keypair_create(ctx, &keypair, key);
+        VALGRIND_MAKE_MEM_DEFINED(&ret, sizeof(ret));
+        CHECK(ret == 1);
+        ret = secp256k1_schnorr_adaptor_presign(ctx, sig, msg, &keypair, t, NULL);
+        VALGRIND_MAKE_MEM_DEFINED(&ret, sizeof(ret));
+        CHECK(ret == 1);
+    }
+#endif
+
 #ifdef ENABLE_MODULE_ECDSA_S2C
     {
         unsigned char s2c_data[32] = {0};
